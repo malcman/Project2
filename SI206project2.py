@@ -61,14 +61,31 @@ def grab_headlines():
 def get_umsi_data():
     umsi_titles = {}
     base_url = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All"
+    pagedURL = base_url
     end_url = "https://www.si.umich.edu/directory?field_person_firstname_value=&field_person_lastname_value=&rid=All&page=12"
-    while base_url != end_url:
-    	req = requests.get(base_url, headers={'User-Agent': 'SI_CLASS'})
+    pageNum = 0
+    while pageNum < 13:
+    	if pageNum != 0:
+    		pagedURL = base_url + "&page=" + str(pageNum)
+    	req = requests.get(pagedURL, headers={'User-Agent': 'SI_CLASS'})
     	soup = BeautifulSoup(req.content, "lxml")
-    	people = soup.find_all("div", class_="view-content")[0]
+    	people = soup.find_all("div", class_="ds-1col node node-person node-teaser view-mode-teaser clearfix")
+    	#print(str(pageNum))
     	for person in people:
-    		title = people.find_all("div", property="dc:title")
-    		print(title)
+    		H2s = person.find_all("h2")
+    		name = ""
+    		title = ""
+    		if len(H2s) > 1:
+    			name = H2s[1].text
+    		elif len(H2s) == 1:
+    			name = H2s[0].text
+    		titleClass = person.find_all("div", class_="field-item even")
+    		if len(titleClass) > 3:
+    			title = titleClass[3].text
+    		elif len(titleClass) == 3:
+    			title = titleClass[2].text
+    		umsi_titles[name] = title
+    	pageNum += 1
     return umsi_titles
 
 
@@ -76,8 +93,11 @@ def get_umsi_data():
 ## INPUT: The dictionary from get_umsi_data().
 ## OUTPUT: Return number of PhD students in the data.  (Don't forget, I may change the input data)
 def num_students(data):
-    pass
-    #Your code here
+	count = 0
+	for person in data:
+		if "PhD student" in data[person]:
+			count += 1
+	return count
 
 
 
